@@ -192,8 +192,88 @@ def main(mode="bot", bot_level="hard"):
 
         draw_figures()
         pygame.display.update()
+def draw_text_center(text, y, font, color):
+    text_surface = font.render(text, True, color)
+    text_rect = text_surface.get_rect(center=(WIDTH // 2, y))
+    screen.blit(text_surface, text_rect)
+
+def menu_screen():
+    menu_font = pygame.font.SysFont(None, 70)
+    option_font = pygame.font.SysFont(None, 48)
+    info_font = pygame.font.SysFont(None, 32)
+    selected_mode = 0  # 0: 2P, 1: Bot
+    bot_levels = ["easy", "medium", "hard"]
+    bot_level_idx = 0
+    choosing_bot = False
+
+    clock = pygame.time.Clock()
+
+    while True:
+        screen.fill(BG_COLOR)
+        draw_text_center("Tic Tac Toe", 110, menu_font, CIRCLE_COLOR)
+
+        # Highlight selection
+        color_2p = RED if selected_mode == 0 and not choosing_bot else CROSS_COLOR
+        color_bot = RED if selected_mode == 1 and not choosing_bot else CROSS_COLOR
+
+        draw_text_center("2 Player", 240, option_font, color_2p)
+        draw_text_center("Bot", 320, option_font, color_bot)
+
+        if selected_mode == 1:
+            # Show bot difficulty selection
+            for i, level in enumerate(bot_levels):
+                color = RED if choosing_bot and bot_level_idx == i else CIRCLE_COLOR
+                draw_text_center(
+                    f"{level.capitalize()}",
+                    400 + i * 50,
+                    option_font,
+                    color
+                )
+            if choosing_bot:
+                draw_text_center("←/→ to change, Enter to start", 570, info_font, LINE_COLOR)
+            else:
+                draw_text_center("Press Enter to select Bot", 570, info_font, LINE_COLOR)
+        else:
+            draw_text_center("Press Enter to start 2 Player", 570, info_font, LINE_COLOR)
+
+        pygame.display.update()
+        clock.tick(60)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if not choosing_bot:
+                    if event.key in (pygame.K_UP, pygame.K_w):
+                        selected_mode = (selected_mode - 1) % 2
+                    if event.key in (pygame.K_DOWN, pygame.K_s):
+                        selected_mode = (selected_mode + 1) % 2
+                    if event.key == pygame.K_RETURN:
+                        if selected_mode == 0:
+                            screen.fill(BG_COLOR)
+                            pygame.display.update()
+                            pygame.time.delay(200)
+                            return "2p", None
+                        else:
+                            choosing_bot = True
+                else:
+                    if event.key == pygame.K_LEFT:
+                        bot_level_idx = (bot_level_idx - 1) % len(bot_levels)
+                    if event.key == pygame.K_RIGHT:
+                        bot_level_idx = (bot_level_idx + 1) % len(bot_levels)
+                    if event.key == pygame.K_RETURN:
+                        screen.fill(BG_COLOR)
+                        pygame.display.update()
+                        pygame.time.delay(200)
+                        return "bot", bot_levels[bot_level_idx]
+                    if event.key == pygame.K_ESCAPE:
+                        choosing_bot = False
 
 # Run game: choose "2p" for 2-player, "bot" for bot mode
 if __name__ == "__main__":
-    # Options: main("2p") OR main("bot", "easy" / "medium" / "hard")
-    main("bot", "hard")
+    mode, bot_level = menu_screen()
+    if mode == "2p":
+        main("2p")
+    else:
+        main("bot", bot_level)
